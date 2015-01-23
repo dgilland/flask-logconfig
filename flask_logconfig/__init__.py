@@ -38,7 +38,12 @@ class LogConfig(object):
         if app is not None:  # pragma: no cover
             self.init_app(app, start_listeners=start_listeners)
 
-    def init_app(self, app, start_listeners=True):
+    def init_app(self,
+                 app,
+                 start_listeners=True,
+                 handler_class=FlaskQueueHandler,
+                 listener_class=logconfig.QueueListener):
+        """Initialize extension on Flask application."""
         app.config.setdefault('LOGGING', None)
         app.config.setdefault('LOGGING_QUEUE', [])
 
@@ -58,8 +63,8 @@ class LogConfig(object):
                 # Use a separate listener for each logger. This will result in
                 # a separate thread for each logger but it avoids issues where
                 # a listener emits the same record to a handler multiple times.
-                listener = logconfig.QueueListener(queue)
-                handler = FlaskQueueHandler(queue)
+                listener = listener_class(queue)
+                handler = handler_class(queue)
                 logconfig.queuify_logger(name, handler, listener)
                 self.listeners[name] = listener
 
