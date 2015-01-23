@@ -56,11 +56,14 @@ class LogConfig(object):
         app.config.setdefault('LOGGING', None)
         app.config.setdefault('LOGGING_QUEUE', [])
 
-        handler_class = (handler_class if handler_class is not None
-                         else self.default_handler_class)
+        handler_class = handler_class or self.handler_class
+        listener_class = listener_class or self.listener_class
 
-        listener_class = (listener_class if listener_class is not None
-                          else self.default_listener_class)
+        if not handler_class:
+            handler_class = self.default_handler_class
+
+        if not listener_class:
+            listener_class = self.default_listener_class
 
         if app.config['LOGGING']:
             # NOTE: app.logger clears all attached loggers from
