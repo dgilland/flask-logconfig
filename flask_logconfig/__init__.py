@@ -31,12 +31,17 @@ class LogConfig(object):
     """Flask extension for configuring Python's logging module from
     application's config object.
     """
+    default_handler_class = FlaskQueueHandler
+    default_listener_class = logconfig.QueueListener
+
     def __init__(self,
                  app=None,
                  start_listeners=True,
-                 handler_class=FlaskQueueHandler,
-                 listener_class=logconfig.QueueListener):
+                 handler_class=None,
+                 listener_class=None):
         self.app = app
+        self.handler_class = handler_class
+        self.listener_class = listener_class
         self.listeners = {}
 
         if app is not None:  # pragma: no cover
@@ -45,11 +50,17 @@ class LogConfig(object):
     def init_app(self,
                  app,
                  start_listeners=True,
-                 handler_class=FlaskQueueHandler,
-                 listener_class=logconfig.QueueListener):
+                 handler_class=None,
+                 listener_class=None):
         """Initialize extension on Flask application."""
         app.config.setdefault('LOGGING', None)
         app.config.setdefault('LOGGING_QUEUE', [])
+
+        handler_class = (handler_class if handler_class is not None
+                         else self.default_handler_class)
+
+        listener_class = (listener_class if listener_class is not None
+                          else self.default_listener_class)
 
         if app.config['LOGGING']:
             # NOTE: app.logger clears all attached loggers from
