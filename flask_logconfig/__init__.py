@@ -31,7 +31,11 @@ class LogConfig(object):
     """Flask extension for configuring Python's logging module from
     application's config object.
     """
-    def __init__(self, app=None, start_listeners=True):
+    def __init__(self,
+                 app=None,
+                 start_listeners=True,
+                 handler_class=FlaskQueueHandler,
+                 listener_class=logconfig.QueueListener):
         self.app = app
         self.listeners = {}
 
