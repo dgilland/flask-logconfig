@@ -5,6 +5,7 @@ Changelog
 v0.3.0 (xxxx-xx-xx)
 -------------------
 
+- Add support for logging all requests.
 - Don't store any application specific state on ``LogConfig`` class. Move ``LogConfig.listeners`` access to ``LogConfig.get_listeners``. **(breaking change)**
 - Make ``LogConfig.start_listeners()`` and ``LogConfig.stop_listeners()`` accept optional ``app`` argument to access listeners associated with that app. If no ``app`` passed in, then ``flask.current_app`` will be accessed.
 - Rename supported configuration keys from ``LOGGING`` and ``LOGGING_QUEUE``to ``LOGCONFIG`` and ``LOGCONFIG_QUEUE`` respectively. **(breaking change)**

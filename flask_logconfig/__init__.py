@@ -6,7 +6,13 @@ import contextlib
 
 import logconfig
 
-from flask import current_app, request, _request_ctx_stack, has_request_context
+from flask import (
+    current_app,
+    request,
+    session,
+    _request_ctx_stack,
+    has_request_context
+)
 
 
 class FlaskLogConfigException(Exception):
@@ -54,6 +60,11 @@ class LogConfig(object):
         """Initialize extension on Flask application."""
         app.config.setdefault('LOGCONFIG', None)
         app.config.setdefault('LOGCONFIG_QUEUE', [])
+        app.config.setdefault('LOGCONFIG_REQUESTS_ENABLED', False)
+        app.config.setdefault('LOGCONFIG_REQUESTS_LOGGER', None)
+        app.config.setdefault('LOGCONFIG_REQUESTS_LEVEL', logging.DEBUG)
+        app.config.setdefault('LOGCONFIG_REQUESTS_MSG_FORMAT',
+                              '{method} {path} - {status_code}')
 
         if not hasattr(app, 'extensions'):  # pragma: no cover
             app.extensions = {}
@@ -79,6 +90,9 @@ class LogConfig(object):
                              start_listeners,
                              listener_class,
                              handler_class)
+
+        if app.config['LOGCONFIG_REQUESTS_ENABLED']:
+            app.after_request(self.after_request_handler)
 
     def setup_logging(self, app):
         """Setup logging configuration for application."""
@@ -122,6 +136,10 @@ class LogConfig(object):
         app = self.get_app(app)
         return app.extensions['logconfig']
 
+    @property
+    def config(self):
+        return self.get_app().config
+
     def get_listeners(self, app=None):
         """Return listeners associated with application."""
         return self.get_state(app)['listeners']
@@ -139,6 +157,55 @@ class LogConfig(object):
         """Stop all queue listeners for application."""
         for listener in self.get_listeners(app).values():
             listener.stop()
+
+    def after_request_handler(self, response):
+        """Log request."""
+        if self.config['LOGCONFIG_REQUESTS_LOGGER']:
+            logger = logging.getLogger(
+                self.config['LOGCONFIG_REQUESTS_LOGGER'])
+        else:
+            logger = self.get_app().logger
+
+        logger.log(self.config['LOGCONFIG_REQUESTS_LEVEL'],
+                   self.make_request_msg(response),
+                   extra={'response': response, 'request': request})
+
+        return response
+
+    def get_request_msg_data(self, response):
+        """Return data for use in request message format string."""
+        data = {}
+
+        # Update with WSGI environ data.
+        data.update(request.environ.copy())
+
+        # Update with request data.
+        data.update({
+            'method': request.method,
+            'path': request.path,
+            'base_url': request.base_url,
+            'url': request.url,
+            'remote_addr': request.remote_addr,
+            'user_agent': request.user_agent
+        })
+
+        # Update with response data.
+        data.update({
+            'status_code': response.status_code,
+            'status': response.status
+        })
+
+        # Update with session data.
+        data.update({
+            'session': dict(session)
+        })
+
+        return data
+
+    def make_request_msg(self, response):
+        """Return string formatted message for request log message."""
+        return (self.config['LOGCONFIG_REQUESTS_MSG_FORMAT']
+                .format(**self.get_request_msg_data(response)))
 
 
 def copy_current_request_context():

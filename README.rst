@@ -144,6 +144,77 @@ After the log handlers are queuified, their listener thread will be started auto
 
 
 
+
+LOGCONFIG_REQUESTS_ENABLED
+--------------------------
+
+When set to ``True``, ``LOGCONFIG_REQUESTS_ENABLED`` turns on logging for all requests. Defaults to ``False``.
+
+Requests will be logged at the end of the request via the ``app.after_request`` hook. In addition to providing a custom log msg, additional ``extra`` arguments will be passed to the logging call:
+
+- ``response``
+- ``request``
+
+These can later be accessed from the log record via ``record.response`` and ``record.request``. This provides a convenient way for the log filters, handlers, and formatters to access request/response specific data.
+
+
+LOGCONFIG_REQUESTS_LOGGER
+-------------------------
+
+The logger name to use when logging all requests. Defaults to ``None`` which uses ``app.logger``.
+
+
+LOGCONFIG_REQUESTS_LEVEL
+------------------------
+
+The log level at which to log all requests. Defaults to ``logging.DEBUG``.
+
+
+LOGCONFIG_REQUESTS_MSG_FORMAT
+-----------------------------
+
+The message format used to generate the ``msg`` argument to ``log()`` when logging all requests. When generating the message, ``LOGCONFIG_REQUESTS_MSG_FORMAT.format(**kargs)`` will be called with the following keyword arguments:
+
+
+From request.environ
+++++++++++++++++++++
+
+- ``SERVER_PORT``
+- ``SERVER_PROTOCOL``
+- ``SCRIPT_NAME``
+- ``REQUEST_METHOD``
+- ``HTTP_HOST``
+- ``PATH_INFO``
+- ``QUERY_STRING``
+- ``CONTENT_LENGTH``
+- ``SERVER_NAME``
+- ``CONTENT_TYPE``
+
+From request
+++++++++++++
+
+- ``method``
+- ``path``
+- ``base_url``
+- ``url``
+- ``remote_addr``
+- ``user_agent``
+
+From response
++++++++++++++
+
+- ``status_code``
+- ``status``
+
+From flask
+++++++++++
+
+- ``session`` (computed as ``dict(flask.session)``)
+
+
+Defaults to ``'{method} {path} - {status_code}'``.
+
+
 Log Record Request Context
 ==========================
 

@@ -34,13 +34,13 @@ logging_dict = {
 }
 
 
-class RequestHandlerConfig(object):
+class UrlHandlerConfig(object):
     LOGCONFIG = {
         'version': 1,
         'disable_existing_loggers': False,
         'handlers': {
             'request': {
-                'class': 'tests.test_flask_logconfig.RequestHandlerFromRecord'
+                'class': 'tests.test_flask_logconfig.UrlHandlerFromRecord'
             }
         },
         'root': {
@@ -51,7 +51,40 @@ class RequestHandlerConfig(object):
     LOGCONFIG_QUEUE = ['']
 
 
-class RequestHandlerFromRecord(logging.Handler):
+class RequestsConfig(object):
+    LOGCONFIG = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'default': {
+                'format': '%(name)s - %(levelname)s - %(message)s'
+            }
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': 'DEBUG',
+                'formatter': 'default',
+                'stream': 'ext://sys.stdout'
+            }
+        },
+        'loggers': {
+            'tests': {
+                'handlers': ['console'],
+                'level': 'DEBUG'
+            },
+            'flask_logconfig': {
+                'handlers': ['console'],
+                'level': 'DEBUG'
+            }
+        }
+    }
+
+    LOGCONFIG_REQUESTS_ENABLED = True
+    LOGCONFIG_REQUESTS_LOGGER = 'tests'
+
+
+class UrlHandlerFromRecord(logging.Handler):
     def emit(self, record):
         with request_context_from_record(record):
             sys.stdout.write(flask.request.url)
@@ -162,10 +195,10 @@ def test_logconfig_queue_creation(app, names, handlers):
 
 
 @parametrize('handler_class', [
-    'tests.test_flask_logconfig.RequestHandlerFromRecord',
+    'tests.test_flask_logconfig.UrlHandlerFromRecord',
 ])
 def test_logconfig_queue_request_context(app, capsys, handler_class):
-    config = RequestHandlerConfig()
+    config = UrlHandlerConfig()
     config.LOGCONFIG = deepcopy(config.LOGCONFIG)
     config.LOGCONFIG['handlers']['request']['class'] = handler_class
 
@@ -208,3 +241,107 @@ def test_request_context_exception(func):
     with pytest.raises(FlaskLogConfigException):
         with func({}):
             pass
+
+
+@parametrize('level', [
+    'DEBUG',
+    'INFO',
+    'WARNING',
+    'ERROR',
+    'CRITICAL'
+])
+def test_logconfig_requests_logging_level(app, capsys, level):
+    config = RequestsConfig()
+    config.LOGCONFIG_REQUESTS_LEVEL = getattr(logging, level)
+
+    init_app(app, config)
+
+    with app.test_request_context():
+        app.test_client().get('/')
+
+    out, err = capsys.readouterr()
+
+    assert out == 'tests - {level} - GET / - 404\n'.format(level=level)
+
+
+@parametrize('is_enabled', [
+    True,
+    False
+])
+def test_logconfig_requests_logging_enabled(app, capsys, is_enabled):
+    config = RequestsConfig()
+    config.LOGCONFIG_REQUESTS_ENABLED = is_enabled
+    init_app(app, config)
+
+    with app.test_request_context():
+        app.test_client().get('/')
+
+    out, err = capsys.readouterr()
+
+    assert bool(out) == is_enabled
+
+
+@parametrize('logger', [
+    None,
+    'tests'
+])
+def test_logconfig_requests_logging_logger(app, capsys, logger):
+    config = RequestsConfig()
+    config.LOGCONFIG_REQUESTS_LOGGER = logger
+    config.LOGGER_NAME = 'flask_logconfig'
+    init_app(app, config)
+
+    with app.test_request_context():
+        app.test_client().get('/')
+
+    out, err = capsys.readouterr()
+
+    # If logger name is None, the default app logger will be used.
+    if logger is None:
+        logger = config.LOGGER_NAME
+
+    assert out == '{logger} - DEBUG - GET / - 404\n'.format(logger=logger)
+
+
+@parametrize('key', [
+    'method',
+    'path',
+    'base_url',
+    'url',
+    'remote_addr',
+    'user_agent',
+    'status_code',
+    'status',
+    'session',
+    'SERVER_PORT',
+    'SERVER_PROTOCOL',
+    'SCRIPT_NAME',
+    'REQUEST_METHOD',
+    'HTTP_HOST',
+    'PATH_INFO',
+    'QUERY_STRING',
+    'CONTENT_LENGTH',
+    'SERVER_NAME',
+    'CONTENT_TYPE'
+])
+def test_logconfig_requests_logging_msg_format(app, capsys, key):
+    config = RequestsConfig()
+    config.LOGCONFIG_REQUESTS_MSG_FORMAT = '{{{0}}}'.format(key)
+
+    logcfg = init_app(app, config)
+
+    data = {}
+
+    def after_request(response):
+        data.update(logcfg.get_request_msg_data(response))
+        return response
+
+    app.after_request(after_request)
+
+    with app.test_request_context():
+        app.test_client().get('/')
+
+    out, err = capsys.readouterr()
+
+    assert key in data
+    assert str(data[key]) in out
