@@ -106,7 +106,7 @@ Use ``Flask-LogConfig`` to easily configure the Python logging module using your
 Configuration
 =============
 
-Configuration of Python's logging module is specified using the standard ``dictConfig`` or ``fileConfig`` formats supported by `logging.config <https://docs.python.org/library/logging.config.html>`_. This allows Flaks apps to be configured as one would in a Django app that uses `logging <https://docs.djangoproject.com/en/1.7/topics/logging/>`__.
+Configuration of Python's logging module is specified using the standard ``dictConfig`` or ``fileConfig`` formats supported by `logging.config <https://docs.python.org/library/logging.config.html>`_. This allows Flask apps to be configured as one would in a Django app that uses `logging <https://docs.djangoproject.com/en/1.7/topics/logging/>`__.
 
 
 LOGCONFIG
