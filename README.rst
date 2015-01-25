@@ -137,12 +137,13 @@ After the log handlers are queuified, their listener thread will be started auto
     assert isinstance(logcfg, list)
 
     # start listeners manually
-    logcfg.start_listeners()
+    logcfg.start_listeners(app)
 
     # stop listeners
-    logcfg.stop_listeners()
+    logcfg.stop_listeners(app)
 
 
+See the `Log Record Request Context`_ section for details on accessing an application's request context from within a queue.
 
 
 LOGCONFIG_REQUESTS_ENABLED
