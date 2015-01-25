@@ -174,7 +174,9 @@ The log level at which to log all requests. Defaults to ``logging.DEBUG``.
 LOGCONFIG_REQUESTS_MSG_FORMAT
 -----------------------------
 
-The message format used to generate the ``msg`` argument to ``log()`` when logging all requests. When generating the message, ``LOGCONFIG_REQUESTS_MSG_FORMAT.format(**kargs)`` will be called with the following keyword arguments:
+The message format used to generate the ``msg`` argument to ``log()`` when logging all requests. Defaults to ``'{method} {path} - {status_code}'``.
+
+When generating the message, ``LOGCONFIG_REQUESTS_MSG_FORMAT.format(**kargs)`` will be called with the following keyword arguments:
 
 
 From request.environ
@@ -210,10 +212,21 @@ From response
 From flask
 ++++++++++
 
-- ``session`` (computed as ``dict(flask.session)``)
+- ``session``
+
+**NOTE:** The ``session`` argument is a computed as follows:
 
 
-Defaults to ``'{method} {path} - {status_code}'``.
+.. code-block:: python
+
+    from collections import defaultdict
+    from flask import session
+
+    session_data = defaultdict(lambda: None)
+    session_data.update(dict(session)
+
+
+This means that you can safely access ``session`` values even if they aren't explictly set. When they are missing, ``None`` will be returned instead.
 
 
 Log Record Request Context

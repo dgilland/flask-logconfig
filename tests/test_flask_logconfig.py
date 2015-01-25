@@ -356,5 +356,32 @@ def test_logconfig_requests_logging_msg_format(app, key):
 
     handler = test_logger.handlers[0]
 
+    # In case stored value is a subclass of dict, convert to proper dict.
+    if isinstance(data[key], dict):
+        data[key] = dict(data[key])
+
     assert key in data
     assert handler.matches(msg=str(data[key]))
+
+
+def test_logconfig_requests_logging_msg_format_session(app):
+    config = RequestsConfig()
+    config.LOGCONFIG_REQUESTS_MSG_FORMAT = '{session[foo]} {session[bar]}'
+
+    logcfg = init_app(app, config)
+
+    data = {}
+
+    def after_request(response):
+        data.update(logcfg.get_request_msg_data(response))
+        return response
+
+    app.after_request(after_request)
+
+    with app.test_request_context():
+        app.test_client().get('/')
+
+    handler = test_logger.handlers[0]
+
+    assert 'session' in data
+    assert handler.matches(msg='None None')

@@ -1,7 +1,8 @@
-"""
+"""Flask-LogConfig module.
 """
 
 import logging
+from collections import defaultdict
 import contextlib
 
 import logconfig
@@ -208,9 +209,12 @@ class LogConfig(object):
             'status': response.status
         })
 
+        session_data = defaultdict(lambda: None)
+        session_data.update(dict(session))
+
         # Update with session data.
         data.update({
-            'session': dict(session)
+            'session': session_data
         })
 
         return data
