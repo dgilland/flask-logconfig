@@ -48,7 +48,7 @@ Use ``Flask-LogConfig`` to easily configure the Python logging module using your
     from flask.ext.logconfig import LogConfig
 
     class MyConfig(object):
-        LOGGING = {
+        LOGCONFIG = {
             'version': 1,
             'disable_existing_loggers': False,
             'formatters': {
@@ -92,7 +92,7 @@ Use ``Flask-LogConfig`` to easily configure the Python logging module using your
             }
         }
 
-        LOGGING_QUEUE = ['myapp']
+        LOGCONFIG_QUEUE = ['myapp']
 
     app = flask.Flask(__name__)
     app.config.from_object(MyConfig)
@@ -109,18 +109,18 @@ Configuration
 Configuration of Python's logging module is specified using the standard ``dictConfig`` or ``fileConfig`` formats supported by `logging.config <https://docs.python.org/library/logging.config.html>`_. This allows Flaks apps to be configured as one would in a Django app that uses `logging <https://docs.djangoproject.com/en/1.7/topics/logging/>`__.
 
 
-LOGGING
--------
+LOGCONFIG
+---------
 
-The main configuration option for ``Flask-LogConfig`` is ``LOGGING``. This option can either be a ``dict`` or a pathname to a configuration file. The format of the ``dict`` or config file must follow the format supported by ``logging.config.dictConfig`` or ``loging.config.fileConfig``. See `Logging Configuration <https://docs.python.org/library/logging.config.html>`_ for more details. If using a pathname, the supported file formats are ``JSON``, ``YAML``, and ``ConfigParser``.
+The main configuration option for ``Flask-LogConfig`` is ``LOGCONFIG``. This option can either be a ``dict`` or a pathname to a configuration file. The format of the ``dict`` or config file must follow the format supported by ``logging.config.dictConfig`` or ``loging.config.fileConfig``. See `Logging Configuration <https://docs.python.org/library/logging.config.html>`_ for more details. If using a pathname, the supported file formats are ``JSON``, ``YAML``, and ``ConfigParser``.
 
 
-LOGGING_QUEUE
--------------
+LOGCONFIG_QUEUE
+---------------
 
-The purpose of ``LOGGING_QUEUE`` is to provide an easy way to utilize logging without blocking the main thread.
+The purpose of ``LOGCONFIG_QUEUE`` is to provide an easy way to utilize logging without blocking the main thread.
 
-To set up a basic logging queue, specify the loggers you want to queuify by setting ``LOGGING_QUEUE`` to a list of the logger names (as strings). These loggers will have their handlers moved to a queue which will then be managed by a queue handler and listener, one per logger.
+To set up a basic logging queue, specify the loggers you want to queuify by setting ``LOGCONFIG_QUEUE`` to a list of the logger names (as strings). These loggers will have their handlers moved to a queue which will then be managed by a queue handler and listener, one per logger.
 
 Each logger's queue handler will be an instance of ``flask_logconfig.FlaskQueueHandler`` which is an extension of `logging.handlers.QueueHandler <https://docs.python.org/3/library/logging.handlers.html#queuehandler>`_ (back ported to Python 2 via `logutils <https://pypi.python.org/pypi/logutils>`_). ``FlaskQueueHandler`` adds a copy of the current request context to the log record so that the queuified log handlers can access any Flask request globals outside of the normal request context (i.e. inside the listener thread) via ``flask_logconfig.request_context_from_record``. The queue listener used is an instance of `logconfig.QueueListener <https://github.com/dgilland/logconfig>`_ that extends `logging.handlers.QueueListener <https://docs.python.org/3/library/logging.handlers.html#logging.handlers.QueueListener>`_ with proper support for respecting a handler's log level (i.e. ``logging.handlers.QueueListener`` delegates all log records to a handler even if that handler's log level is set higher than the log record's while ``logconfig.QueueListener`` does not).
 
@@ -147,7 +147,7 @@ After the log handlers are queuified, their listener thread will be started auto
 Log Record Request Context
 ==========================
 
-When using ``LOGGING_QUEUE``, accessing Flask's request globals from within a log handler requires using the request context that is attached to the emitted log record.
+When using ``LOGCONFIG_QUEUE``, accessing Flask's request globals from within a log handler requires using the request context that is attached to the emitted log record.
 
 Below is an example that uses a logging ``Filter`` to attach the request environment to the log record using ``flask_logconfig.request_context_from_record``:
 

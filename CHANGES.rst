@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+v0.3.0 (xxxx-xx-xx)
+-------------------
+
+- Rename supported configuration keys from ``LOGGING`` and ``LOGGING_QUEUE``to ``LOGCONFIG`` and ``LOGCONFIG_QUEUE`` respectively. **(breaking change)**
+
+
 v0.2.0 (2015-01-22)
 -------------------
 

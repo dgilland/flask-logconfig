@@ -53,8 +53,8 @@ class LogConfig(object):
                  handler_class=None,
                  listener_class=None):
         """Initialize extension on Flask application."""
-        app.config.setdefault('LOGGING', None)
-        app.config.setdefault('LOGGING_QUEUE', [])
+        app.config.setdefault('LOGCONFIG', None)
+        app.config.setdefault('LOGCONFIG_QUEUE', [])
 
         handler_class = handler_class or self.handler_class
         listener_class = listener_class or self.listener_class
@@ -65,7 +65,7 @@ class LogConfig(object):
         if not listener_class:
             listener_class = self.default_listener_class
 
-        if app.config['LOGGING']:
+        if app.config['LOGCONFIG']:
             # NOTE: app.logger clears all attached loggers from
             # app.config['LOGGER_NAME'] but ONLY AFTER FIRST ACCESS! Therefore,
             # we access it here so that whatever logging configuration is being
@@ -73,7 +73,7 @@ class LogConfig(object):
             app.logger
             logconfig.from_autodetect(app.config['LOGGING'])
 
-        if app.config['LOGGING_QUEUE']:
+        if app.config['LOGCONFIG_QUEUE']:
             # Create a single queue for all queued loggers.
             queue = logconfig.Queue(-1)
 

@@ -35,7 +35,7 @@ logging_dict = {
 
 
 class RequestHandlerConfig(object):
-    LOGGING = {
+    LOGCONFIG = {
         'version': 1,
         'disable_existing_loggers': False,
         'handlers': {
@@ -48,7 +48,7 @@ class RequestHandlerConfig(object):
             'level': 'DEBUG'
         }
     }
-    LOGGING_QUEUE = ['']
+    LOGCONFIG_QUEUE = ['']
 
 
 class RequestHandlerFromRecord(logging.Handler):
@@ -97,27 +97,28 @@ def init_app(app, settings):
 ])
 def test_config_value_logging(app, config, funcall):
     class Config:
-        LOGGING = config
+        LOGCONFIG = config
 
     with mock.patch(funcall) as patched:
         init_app(app, Config)
-        patched.assert_called_once_with(Config.LOGGING)
+        patched.assert_called_once_with(Config.LOGCONFIG)
 
 
-def test_config_value_logging_queue(app):
+def test_config_value_logconfig_queue(app):
     class Config:
-        LOGGING_QUEUE = ['logconfig', 'customlogger']
+        LOGCONFIG_QUEUE = ['logconfig', 'customlogger']
 
     with mock.patch('logconfig.queuify_logger') as patched:
         logcfg = init_app(app, Config)
 
         assert patched.called
-        assert patched.call_count == len(Config.LOGGING_QUEUE)
+        assert patched.call_count == len(Config.LOGCONFIG_QUEUE)
 
-        for idx, name in enumerate(Config.LOGGING_QUEUE):
+        for idx, name in enumerate(Config.LOGCONFIG_QUEUE):
             assert patched.mock_calls[idx][1][0] == name
 
-        assert len(logcfg.listeners) == len(Config.LOGGING_QUEUE)
+        with app.app_context():
+            assert len(logcfg.get_listeners()) == len(Config.LOGCONFIG_QUEUE)
 
 
 @parametrize('names,handlers', [
@@ -126,24 +127,24 @@ def test_config_value_logging_queue(app):
     (['custom1', 'custom2'], ['null1']),
     (['custom1', 'custom2'], ['null1', 'null2']),
 ])
-def test_logging_queue_creation(app, names, handlers):
+def test_logconfig_queue_creation(app, names, handlers):
     class Config:
-        LOGGING = {
+        LOGCONFIG = {
             'version': 1,
             'disable_existing_loggers': False,
             'handlers': {},
             'loggers': {}
         }
 
-        LOGGING_QUEUE = names
+        LOGCONFIG_QUEUE = names
 
     for handler in handlers:
-        Config.LOGGING['handlers'][handler] = {
+        Config.LOGCONFIG['handlers'][handler] = {
             'class': 'logging.StreamHandler'
         }
 
     for name in names:
-        Config.LOGGING['loggers'][name] = {'handlers': handlers}
+        Config.LOGCONFIG['loggers'][name] = {'handlers': handlers}
 
     logcfg = init_app(app, Config)
     logger = logging.getLogger(name)
@@ -162,10 +163,10 @@ def test_logging_queue_creation(app, names, handlers):
 @parametrize('handler_class', [
     'tests.test_flask_logconfig.RequestHandlerFromRecord',
 ])
-def test_logging_queue_request_context(app, capsys, handler_class):
+def test_logconfig_queue_request_context(app, capsys, handler_class):
     config = RequestHandlerConfig()
-    config.LOGGING = deepcopy(config.LOGGING)
-    config.LOGGING['handlers']['request']['class'] = handler_class
+    config.LOGCONFIG = deepcopy(config.LOGCONFIG)
+    config.LOGCONFIG['handlers']['request']['class'] = handler_class
 
     logcfg = init_app(app, config)
 
