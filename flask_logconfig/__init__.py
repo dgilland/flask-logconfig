@@ -37,15 +37,18 @@ class LogConfig(object):
     """Flask extension for configuring Python's logging module from
     application's config object.
     """
+    default_queue_class = logconfig.Queue
     default_handler_class = FlaskQueueHandler
     default_listener_class = logconfig.QueueListener
 
     def __init__(self,
                  app=None,
                  start_listeners=True,
+                 queue_class=None,
                  handler_class=None,
                  listener_class=None):
         self.app = app
+        self.queue_class = queue_class
         self.handler_class = handler_class
         self.listener_class = listener_class
 
@@ -55,6 +58,7 @@ class LogConfig(object):
     def init_app(self,
                  app,
                  start_listeners=True,
+                 queue_class=None,
                  handler_class=None,
                  listener_class=None):
         """Initialize extension on Flask application."""
@@ -76,6 +80,9 @@ class LogConfig(object):
         handler_class = handler_class or self.handler_class
         listener_class = listener_class or self.listener_class
 
+        if not queue_class:
+            queue_class = self.default_queue_class
+
         if not handler_class:
             handler_class = self.default_handler_class
 
@@ -88,6 +95,7 @@ class LogConfig(object):
         if app.config['LOGCONFIG_QUEUE']:
             self.setup_queue(app,
                              start_listeners,
+                             queue_class,
                              listener_class,
                              handler_class)
 
@@ -103,10 +111,15 @@ class LogConfig(object):
         app.logger
         logconfig.from_autodetect(app.config['LOGCONFIG'])
 
-    def setup_queue(self, app, start_listeners, listener_class, handler_class):
+    def setup_queue(self,
+                    app,
+                    start_listeners,
+                    queue_class,
+                    listener_class,
+                    handler_class):
         """Setup unified logging queue for application."""
         # Create one queue for all queued loggers.
-        queue = logconfig.Queue(-1)
+        queue = queue_class(-1)
 
         for name in app.config['LOGCONFIG_QUEUE']:
             # Use a separate listener for each logger. This will result in
