@@ -149,15 +149,16 @@ def test_logconfig_queue_creation(app, names, handlers):
     logcfg = init_app(app, Config)
     logger = logging.getLogger(name)
 
-    assert len(logcfg.listeners) == len(names)
+    with app.app_context():
+        assert len(logcfg.get_listeners()) == len(names)
 
-    for name in names:
-        logger = logging.getLogger(name)
-        assert len(logger.handlers) == 1
-        assert isinstance(logger.handlers[0], FlaskQueueHandler)
-        assert len(logcfg.listeners[name].handlers) == len(handlers)
+        for name in names:
+            logger = logging.getLogger(name)
+            assert len(logger.handlers) == 1
+            assert isinstance(logger.handlers[0], FlaskQueueHandler)
+            assert len(logcfg.get_listeners()[name].handlers) == len(handlers)
 
-    logcfg.stop_listeners()
+        logcfg.stop_listeners()
 
 
 @parametrize('handler_class', [
@@ -186,7 +187,8 @@ def test_logconfig_queue_request_context(app, capsys, handler_class):
     assert ('working outside of request context'
             in logconfig._compat.text_type(excinfo.value))
 
-    logcfg.stop_listeners()
+    with app.app_context():
+        logcfg.stop_listeners()
 
     out, err = capsys.readouterr()
 

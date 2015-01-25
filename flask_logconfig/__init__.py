@@ -42,7 +42,6 @@ class LogConfig(object):
         self.app = app
         self.handler_class = handler_class
         self.listener_class = listener_class
-        self.listeners = {}
 
         if app is not None:  # pragma: no cover
             self.init_app(app, start_listeners=start_listeners)
@@ -56,6 +55,13 @@ class LogConfig(object):
         app.config.setdefault('LOGCONFIG', None)
         app.config.setdefault('LOGCONFIG_QUEUE', [])
 
+        if not hasattr(app, 'extensions'):  # pragma: no cover
+            app.extensions = {}
+
+        app.extensions['logconfig'] = {
+            'listeners': {}
+        }
+
         handler_class = handler_class or self.handler_class
         listener_class = listener_class or self.listener_class
 
@@ -66,37 +72,72 @@ class LogConfig(object):
             listener_class = self.default_listener_class
 
         if app.config['LOGCONFIG']:
-            # NOTE: app.logger clears all attached loggers from
-            # app.config['LOGGER_NAME'] but ONLY AFTER FIRST ACCESS! Therefore,
-            # we access it here so that whatever logging configuration is being
-            # loaded won't be lost.
-            app.logger
-            logconfig.from_autodetect(app.config['LOGGING'])
+            self.setup_logging(app)
 
         if app.config['LOGCONFIG_QUEUE']:
-            # Create a single queue for all queued loggers.
-            queue = logconfig.Queue(-1)
+            self.setup_queue(app,
+                             start_listeners,
+                             listener_class,
+                             handler_class)
 
-            for name in app.config['LOGGING_QUEUE']:
-                # Use a separate listener for each logger. This will result in
-                # a separate thread for each logger but it avoids issues where
-                # a listener emits the same record to a handler multiple times.
-                listener = listener_class(queue)
-                handler = handler_class(queue)
-                logconfig.queuify_logger(name, handler, listener)
-                self.listeners[name] = listener
+    def setup_logging(self, app):
+        """Setup logging configuration for application."""
+        # NOTE: app.logger clears all attached loggers from
+        # app.config['LOGGER_NAME'] but ONLY AFTER FIRST ACCESS! Therefore,
+        # we access it here so that whatever logging configuration is being
+        # loaded won't be lost.
+        app.logger
+        logconfig.from_autodetect(app.config['LOGCONFIG'])
 
-            if start_listeners:
-                self.start_listeners()
+    def setup_queue(self, app, start_listeners, listener_class, handler_class):
+        """Setup unified logging queue for application."""
+        # Create one queue for all queued loggers.
+        queue = logconfig.Queue(-1)
 
-    def start_listeners(self):
-        """Start all queue listeners."""
-        for listener in self.listeners.values():
+        for name in app.config['LOGCONFIG_QUEUE']:
+            # Use a separate listener for each logger. This will result in
+            # a separate thread for each logger but it avoids issues where
+            # a listener emits the same record to a handler multiple times.
+            listener = listener_class(queue)
+            handler = handler_class(queue)
+            logconfig.queuify_logger(name, handler, listener)
+
+            self.add_listener(app, name, listener)
+
+        if start_listeners:
+            self.start_listeners(app)
+
+    def get_app(self, app=None):
+        """Look up and return application."""
+        if app is not None:
+            return app
+
+        if self.app is not None:  # pragma: no cover
+            return app
+
+        return current_app
+
+    def get_state(self, app=None):
+        """Return stored state for application."""
+        app = self.get_app(app)
+        return app.extensions['logconfig']
+
+    def get_listeners(self, app=None):
+        """Return listeners associated with application."""
+        return self.get_state(app)['listeners']
+
+    def add_listener(self, app, name, listener):
+        """Add `listener` indexed by `name` to application."""
+        self.get_listeners(app)[name] = listener
+
+    def start_listeners(self, app=None):
+        """Start all queue listeners for application."""
+        for listener in self.get_listeners(app).values():
             listener.start()
 
-    def stop_listeners(self):
-        """Stop all queue listeners."""
-        for listener in self.listeners.values():
+    def stop_listeners(self, app=None):
+        """Stop all queue listeners for application."""
+        for listener in self.get_listeners(app).values():
             listener.stop()
 
 
