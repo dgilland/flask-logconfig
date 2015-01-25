@@ -1,6 +1,7 @@
 astroid==1.3.2
 Flask>=0.10.1
 logconfig>=0.4.0
+logutils>=0.3.3
 mock>=1.0.1
 pep8>=1.5.7
 pylint==1.3.1

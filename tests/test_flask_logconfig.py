@@ -7,6 +7,7 @@ import pytest
 import mock
 import flask
 import logconfig
+from logutils.testing import TestHandler, Matcher
 
 from flask_logconfig import (
     LogConfig,
@@ -17,6 +18,11 @@ from flask_logconfig import (
 
 
 parametrize = pytest.mark.parametrize
+
+
+test_logger = logging.getLogger('tests')
+test_matcher = Matcher()
+
 
 logging_dict = {
     'version': 1,
@@ -61,20 +67,20 @@ class RequestsConfig(object):
             }
         },
         'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
+            'test_handler': {
+                'class': 'tests.test_flask_logconfig.TestHandler',
                 'level': 'DEBUG',
                 'formatter': 'default',
-                'stream': 'ext://sys.stdout'
+                'matcher': test_matcher
             }
         },
         'loggers': {
             'tests': {
-                'handlers': ['console'],
+                'handlers': ['test_handler'],
                 'level': 'DEBUG'
             },
             'flask_logconfig': {
-                'handlers': ['console'],
+                'handlers': ['test_handler'],
                 'level': 'DEBUG'
             }
         }
@@ -250,7 +256,7 @@ def test_request_context_exception(func):
     'ERROR',
     'CRITICAL'
 ])
-def test_logconfig_requests_logging_level(app, capsys, level):
+def test_logconfig_requests_logging_level(app, level):
     config = RequestsConfig()
     config.LOGCONFIG_REQUESTS_LEVEL = getattr(logging, level)
 
@@ -259,16 +265,16 @@ def test_logconfig_requests_logging_level(app, capsys, level):
     with app.test_request_context():
         app.test_client().get('/')
 
-    out, err = capsys.readouterr()
-
-    assert out == 'tests - {level} - GET / - 404\n'.format(level=level)
+    handler = test_logger.handlers[0]
+    message = handler.formatted[0]
+    assert message == 'tests - {level} - GET / - 404'.format(level=level)
 
 
 @parametrize('is_enabled', [
     True,
     False
 ])
-def test_logconfig_requests_logging_enabled(app, capsys, is_enabled):
+def test_logconfig_requests_logging_enabled(app, is_enabled):
     config = RequestsConfig()
     config.LOGCONFIG_REQUESTS_ENABLED = is_enabled
     init_app(app, config)
@@ -276,16 +282,16 @@ def test_logconfig_requests_logging_enabled(app, capsys, is_enabled):
     with app.test_request_context():
         app.test_client().get('/')
 
-    out, err = capsys.readouterr()
+    handler = test_logger.handlers[0]
 
-    assert bool(out) == is_enabled
+    assert bool(handler.buffer) == is_enabled
 
 
 @parametrize('logger', [
     None,
     'tests'
 ])
-def test_logconfig_requests_logging_logger(app, capsys, logger):
+def test_logconfig_requests_logging_logger(app, logger):
     config = RequestsConfig()
     config.LOGCONFIG_REQUESTS_LOGGER = logger
     config.LOGGER_NAME = 'flask_logconfig'
@@ -294,13 +300,14 @@ def test_logconfig_requests_logging_logger(app, capsys, logger):
     with app.test_request_context():
         app.test_client().get('/')
 
-    out, err = capsys.readouterr()
-
     # If logger name is None, the default app logger will be used.
     if logger is None:
         logger = config.LOGGER_NAME
 
-    assert out == '{logger} - DEBUG - GET / - 404\n'.format(logger=logger)
+    handler = logging.getLogger(logger).handlers[0]
+    message = handler.formatted[0]
+
+    assert message == '{logger} - DEBUG - GET / - 404'.format(logger=logger)
 
 
 @parametrize('key', [
@@ -324,7 +331,7 @@ def test_logconfig_requests_logging_logger(app, capsys, logger):
     'SERVER_NAME',
     'CONTENT_TYPE'
 ])
-def test_logconfig_requests_logging_msg_format(app, capsys, key):
+def test_logconfig_requests_logging_msg_format(app, key):
     config = RequestsConfig()
     config.LOGCONFIG_REQUESTS_MSG_FORMAT = '{{{0}}}'.format(key)
 
@@ -341,7 +348,7 @@ def test_logconfig_requests_logging_msg_format(app, capsys, key):
     with app.test_request_context():
         app.test_client().get('/')
 
-    out, err = capsys.readouterr()
+    handler = test_logger.handlers[0]
 
     assert key in data
-    assert str(data[key]) in out
+    assert handler.matches(msg=str(data[key]))

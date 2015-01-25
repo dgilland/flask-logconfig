@@ -8,7 +8,7 @@ __url__ = 'https://github.com/dgilland/flask-logconfig'
 __version__ = '0.3.0-dev'
 
 __install_requires__ = ['logconfig>=0.4.0', 'flask']
-__tests_require__ = ['tox']
+__tests_require__ = ['tox', 'logutils']
 
 __author__ = 'Derrick Gilland'
 __email__ = 'dgilland@gmail.com'
