@@ -1,7 +1,6 @@
 
 from copy import deepcopy
 import logging
-import sys
 
 import pytest
 import mock
@@ -44,13 +43,21 @@ class UrlHandlerConfig(object):
     LOGCONFIG = {
         'version': 1,
         'disable_existing_loggers': False,
+        'formatters': {
+            'url': {
+                '()': 'tests.test_flask_logconfig.url_formatter_factory'
+            }
+        },
         'handlers': {
-            'request': {
-                'class': 'tests.test_flask_logconfig.UrlHandlerFromRecord'
+            'test_handler': {
+                'class': 'tests.test_flask_logconfig.TestHandler',
+                'level': 'DEBUG',
+                'formatter': 'url',
+                'matcher': test_matcher
             }
         },
         'root': {
-            'handlers': ['request'],
+            'handlers': ['test_handler'],
             'level': 'DEBUG'
         }
     }
@@ -90,10 +97,14 @@ class RequestsConfig(object):
     LOGCONFIG_REQUESTS_LOGGER = 'tests'
 
 
-class UrlHandlerFromRecord(logging.Handler):
-    def emit(self, record):
+class UrlFormatter(logging.Formatter):
+    def format(self, record):
         with request_context_from_record(record):
-            sys.stdout.write(flask.request.url)
+            return flask.request.url
+
+
+def url_formatter_factory():
+    return UrlFormatter()
 
 
 @pytest.fixture(scope='function')
@@ -200,13 +211,9 @@ def test_logconfig_queue_creation(app, names, handlers):
         logcfg.stop_listeners()
 
 
-@parametrize('handler_class', [
-    'tests.test_flask_logconfig.UrlHandlerFromRecord',
-])
-def test_logconfig_queue_request_context(app, capsys, handler_class):
+def test_logconfig_queue_request_context(app):
     config = UrlHandlerConfig()
     config.LOGCONFIG = deepcopy(config.LOGCONFIG)
-    config.LOGCONFIG['handlers']['request']['class'] = handler_class
 
     logcfg = init_app(app, config)
 
@@ -228,10 +235,9 @@ def test_logconfig_queue_request_context(app, capsys, handler_class):
 
     with app.app_context():
         logcfg.stop_listeners()
+        handler = logcfg.get_listeners()[''].handlers[0]
 
-    out, err = capsys.readouterr()
-
-    assert url in out
+    assert url in handler.formatted[0]
 
 
 def test_request_context_from_record(app):
