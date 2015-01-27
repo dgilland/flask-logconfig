@@ -3,7 +3,8 @@
 .. include:: ../README.rst
 
 
-Contents:
+Guide
+=====
 
 .. toctree::
    :maxdepth: 2
