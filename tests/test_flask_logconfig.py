@@ -325,6 +325,7 @@ def test_logconfig_requests_logging_logger(app, logger):
     'user_agent',
     'status_code',
     'status',
+    'execution_time',
     'session',
     'SERVER_PORT',
     'SERVER_PROTOCOL',
@@ -337,7 +338,7 @@ def test_logconfig_requests_logging_logger(app, logger):
     'SERVER_NAME',
     'CONTENT_TYPE'
 ])
-def test_logconfig_requests_logging_msg_format(app, key):
+def test_logconfig_requests_logging_message_format(app, key):
     config = RequestsConfig()
     config.LOGCONFIG_REQUESTS_MSG_FORMAT = '{{{0}}}'.format(key)
 
@@ -346,7 +347,7 @@ def test_logconfig_requests_logging_msg_format(app, key):
     data = {}
 
     def after_request(response):
-        data.update(logcfg.get_request_msg_data(response))
+        data.update(logcfg.get_request_message_data(response))
         return response
 
     app.after_request(after_request)
@@ -361,10 +362,10 @@ def test_logconfig_requests_logging_msg_format(app, key):
         data[key] = dict(data[key])
 
     assert key in data
-    assert handler.matches(msg=str(data[key]))
+    assert handler.matches(msg='{0}'.format(data[key]))
 
 
-def test_logconfig_requests_logging_msg_format_session(app):
+def test_logconfig_requests_logging_message_xformat_session(app):
     config = RequestsConfig()
     config.LOGCONFIG_REQUESTS_MSG_FORMAT = '{session[foo]} {session[bar]}'
 
@@ -373,7 +374,7 @@ def test_logconfig_requests_logging_msg_format_session(app):
     data = {}
 
     def after_request(response):
-        data.update(logcfg.get_request_msg_data(response))
+        data.update(logcfg.get_request_message_data(response))
         return response
 
     app.after_request(after_request)

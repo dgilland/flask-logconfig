@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+- Add ``execution_time`` to log's extra data and request message data.
+- Rename ``FlaskLogConfig.after_request_handler`` to ``FlaskLogConfig.after_request``. **(possible breaking change)**
+- Rename ``FlaskLogConfig.get_request_msg_data`` to ``FlaskLogConfig.get_request_message_data``. **(possible breaking change)**
+- Rename ``FlaskLogConfig.make_request_msg`` to ``FlaskLogConfig.make_request_message``. **(possible breaking change)**
+
+
 v0.3.1 (2015-01-26)
 -------------------
 

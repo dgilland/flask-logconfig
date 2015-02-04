@@ -193,6 +193,8 @@ From request.environ
 - ``SERVER_NAME``
 - ``CONTENT_TYPE``
 
+**NOTE:** Additional data may be available depending on the WSGI environment provided.
+
 From request
 ++++++++++++
 
@@ -227,6 +229,11 @@ From flask
 
 
 This means that you can safely access ``session`` values even if they aren't explictly set. When they are missing, ``None`` will be returned instead.
+
+From computed
++++++++++++++
+
+- ``execution_time`` (in milliseconds) **NOTE:** This is the time between the start of the request and then end.
 
 
 Log Record Request Context
