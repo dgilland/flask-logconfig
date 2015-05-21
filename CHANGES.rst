@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+v0.4.1 (2015-05-20)
+-------------------
+
+- Fix issue where an extra request context stack was created during ``reqest_context_from_record()`` call.
+
+
 v0.4.0 (2015-02-03)
 -------------------
 

@@ -300,8 +300,7 @@ def request_context_from_record(record=None):
         with record.request_context as ctx:
             yield ctx
     elif has_request_context():
-        with _request_ctx_stack.top as ctx:
-            yield ctx
+        yield _request_ctx_stack.top
     else:
         raise FlaskLogConfigException('No request context found on log record')
 
