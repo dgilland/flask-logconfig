@@ -308,5 +308,5 @@ def request_context_from_record(record=None):
 def milliseconds_between(start, stop):
     """Return milliseconds between `start` and `stop` datetime objects."""
     diff = stop - start
-    return ((diff.days * 24 * 60 * 60 + diff.seconds) * 1000
-            + diff.microseconds / 1000.0)
+    return ((diff.days * 24 * 60 * 60 + diff.seconds) * 1000 +
+            diff.microseconds / 1000.0)
