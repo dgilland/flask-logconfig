@@ -162,7 +162,7 @@ class LogConfig(object):
             return app
 
         if self.app is not None:  # pragma: no cover
-            return app
+            return self.app
 
         return current_app
 

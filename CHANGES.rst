@@ -2,6 +2,9 @@ Changelog
 =========
 
 
+- Fix bug in application lookup where ``None`` would be returned instead of the application instance when extension was previously initialized with an application instance passed in.
+
+
 v0.4.1 (2015-05-20)
 -------------------
 
