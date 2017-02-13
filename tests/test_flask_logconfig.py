@@ -231,7 +231,7 @@ def test_logconfig_queue_request_context(app):
         flask.request.url
 
     assert ('working outside of request context'
-            in logconfig._compat.text_type(excinfo.value))
+            in logconfig._compat.text_type(excinfo.value).lower())
 
     with app.app_context():
         logcfg.stop_listeners()
