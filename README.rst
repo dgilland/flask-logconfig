@@ -276,14 +276,14 @@ It's also safe to use ``request_context_from_record`` from directly inside Flask
 If no request context exists (either on the log record provided or inside the actual Flask request context), then a ``flask_logconfig.FlaskLogConfigException`` will be thrown.
 
 
-.. |version| image:: http://img.shields.io/pypi/v/flask-logconfig.svg?style=flat
+.. |version| image:: http://img.shields.io/pypi/v/flask-logconfig.svg?style=flat-square
     :target: https://pypi.python.org/pypi/flask-logconfig/
 
-.. |travis| image:: http://img.shields.io/travis/dgilland/flask-logconfig/master.svg?style=flat
+.. |travis| image:: http://img.shields.io/travis/dgilland/flask-logconfig/master.svg?style=flat-square
     :target: https://travis-ci.org/dgilland/flask-logconfig
 
-.. |coveralls| image:: http://img.shields.io/coveralls/dgilland/flask-logconfig/master.svg?style=flat
+.. |coveralls| image:: http://img.shields.io/coveralls/dgilland/flask-logconfig/master.svg?style=flat-square
     :target: https://coveralls.io/r/dgilland/flask-logconfig
 
-.. |license| image:: http://img.shields.io/pypi/l/flask-logconfig.svg?style=flat
+.. |license| image:: http://img.shields.io/pypi/l/flask-logconfig.svg?style=flat-square
     :target: https://pypi.python.org/pypi/flask-logconfig/
