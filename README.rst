@@ -225,7 +225,7 @@ From flask
     from flask import session
 
     session_data = defaultdict(lambda: None)
-    session_data.update(dict(session)
+    session_data.update(dict(session))
 
 
 This means that you can safely access ``session`` values even if they aren't explictly set. When they are missing, ``None`` will be returned instead.
